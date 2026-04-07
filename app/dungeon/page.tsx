@@ -9,7 +9,6 @@ import CardDouble from "@components/CardDouble";
 import ActionButton from "@components/ActionButton";
 import Badge from "@components/Badge";
 import BarProgress from "@components/BarProgress";
-import DefaultLayout from "@components/page/DefaultLayout";
 
 // ── DATA ─────────────────────────────────────────────────────────────
 
@@ -132,9 +131,9 @@ function getCost(u: { baseCost: number; costMult: number; id: string }, building
 
 const layout: React.CSSProperties = { display: "flex", gap: 0, minHeight: "85vh" };
 const leftCol: React.CSSProperties = {
-  flex: "0 0 320px",
+  flex: "0 0 38%",
   borderRight: "2px solid var(--theme-border)",
-  padding: "1em 2ch",
+  padding: "2em 3ch",
   display: "flex",
   flexDirection: "column",
 };
@@ -440,7 +439,7 @@ export default function DungeonPage() {
   // ── MAIN RENDER ──────────────────────────────────────────────────
 
   return (
-    <DefaultLayout previewPixelSRC="https://intdev-global.s3.us-west-2.amazonaws.com/template-app-icon.png">
+    <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
       {/* Event banner */}
       {eventBanner && (
         <div style={{
@@ -557,7 +556,7 @@ export default function DungeonPage() {
         {/* RIGHT COLUMN */}
         <div style={rightCol}>
           {/* Tabs */}
-          <div style={{ padding: "1em 2ch 0", borderBottom: "1px solid var(--theme-border)" }}>
+          <div style={{ padding: "2em 3ch 0", borderBottom: "1px solid var(--theme-border)" }}>
             <span style={tab === "hirelings" ? tabActive : tabStyle} onClick={() => setTab("hirelings")}>HIRELINGS</span>
             <span style={tab === "upgrades" ? tabActive : tabStyle} onClick={() => setTab("upgrades")}>UPGRADES</span>
             <span style={tab === "achievements" ? tabActive : tabStyle} onClick={() => setTab("achievements")}>
@@ -566,7 +565,7 @@ export default function DungeonPage() {
             <span style={tab === "stats" ? tabActive : tabStyle} onClick={() => setTab("stats")}>STATS</span>
           </div>
 
-          <div style={{ padding: "1em 2ch" }}>
+          <div style={{ padding: "1em 3ch" }}>
             {tab === "hirelings" && (
               <CardDouble title="HIRELINGS">
                 {HIRES.map(renderShopItem)}
@@ -589,6 +588,6 @@ export default function DungeonPage() {
           </div>
         </div>
       </div>
-    </DefaultLayout>
+    </div>
   );
 }

@@ -1,3 +1,0 @@
-:HL["/unnamed-incremental-game-pages/_next/static/chunks/3c124cc8dd4c3bb2.css","style"]
-:HL["https://intdev-global.s3.us-west-2.amazonaws.com/template-app-icon.png","image"]
-0:{"buildId":"hYj3MHlYq_MTQjXu_90gZ","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":true},"staleTime":300}

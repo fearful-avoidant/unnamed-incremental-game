@@ -22,7 +22,7 @@ export default function Page() {
       </Grid>
 
       <Grid>
-        <ActionListItem icon="→" href="/dungeon">
+        <ActionListItem icon="→" href="/unnamed-incremental-game/dungeon">
           Enter the Dungeon
         </ActionListItem>
         <ActionListItem icon="→" href="https://github.com/fearful-avoidant/unnamed-incremental-game" target="_blank">

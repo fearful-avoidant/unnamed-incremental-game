@@ -1,7 +1,7 @@
 const nextConfig = {
   devIndicators: false,
   output: 'export',
-  basePath: '/unnamed-incremental-game-pages',
+  basePath: '/unnamed-incremental-game',
   images: {
     unoptimized: true,
   },

@@ -245,12 +245,122 @@ export default function DungeonPage() {
   };
 
   const clickBtnRef = React.useRef<HTMLDivElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const golRef = React.useRef<boolean[][]>([]);
+
+  // ── GAME OF LIFE ────────────────────────────────────────────────
+
+  const COLS = 48;
+  const ROWS = 32;
+  const CELL = 8;
+  const GAP = 1;
+
+  const initGol = React.useCallback(() => {
+    const grid: boolean[][] = [];
+    for (let y = 0; y < ROWS; y++) {
+      grid[y] = [];
+      for (let x = 0; x < COLS; x++) {
+        grid[y][x] = Math.random() < 0.15;
+      }
+    }
+    golRef.current = grid;
+  }, []);
+
+  const stepGol = React.useCallback(() => {
+    const g = golRef.current;
+    if (!g.length) return;
+    const next: boolean[][] = [];
+    for (let y = 0; y < ROWS; y++) {
+      next[y] = [];
+      for (let x = 0; x < COLS; x++) {
+        let neighbors = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const ny = (y + dy + ROWS) % ROWS;
+            const nx = (x + dx + COLS) % COLS;
+            if (g[ny][nx]) neighbors++;
+          }
+        }
+        next[y][x] = g[y][x] ? (neighbors === 2 || neighbors === 3) : neighbors === 3;
+      }
+    }
+    golRef.current = next;
+  }, []);
+
+  const seedGol = React.useCallback(() => {
+    const g = golRef.current;
+    if (!g.length) return;
+    for (let i = 0; i < 12; i++) {
+      const y = Math.floor(Math.random() * ROWS);
+      const x = Math.floor(Math.random() * COLS);
+      g[y][x] = true;
+    }
+  }, []);
+
+  const drawGol = React.useCallback(() => {
+    const canvas = canvasRef.current;
+    const g = golRef.current;
+    if (!canvas || !g.length) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const w = COLS * (CELL + GAP) + GAP;
+    const h = ROWS * (CELL + GAP) + GAP;
+    canvas.width = w;
+    canvas.height = h;
+
+    ctx.fillStyle = "#0d1117";
+    ctx.fillRect(0, 0, w, h);
+
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        if (g[y][x]) {
+          // Gradient from green (young) to dim based on neighbor count
+          let neighbors = 0;
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              const ny = (y + dy + ROWS) % ROWS;
+              const nx = (x + dx + COLS) % COLS;
+              if (g[ny][nx]) neighbors++;
+            }
+          }
+          const alpha = 0.3 + (neighbors / 8) * 0.7;
+          ctx.fillStyle = `rgba(63, 185, 80, ${alpha})`;
+        } else {
+          ctx.fillStyle = "rgba(48, 54, 61, 0.3)";
+        }
+        ctx.fillRect(
+          GAP + x * (CELL + GAP),
+          GAP + y * (CELL + GAP),
+          CELL, CELL
+        );
+      }
+    }
+  }, []);
+
+  React.useEffect(() => {
+    initGol();
+    let frameCount = 0;
+    const loop = () => {
+      frameCount++;
+      if (frameCount % 30 === 0) stepGol(); // evolve every ~30 frames (0.5s at 60fps)
+      drawGol();
+      requestAnimationFrame(loop);
+    };
+    const id = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(id);
+  }, [initGol, stepGol, drawGol]);
+
+  // ── END GAME OF LIFE ────────────────────────────────────────────
 
   const doClick = () => {
     const val = clickVal;
     setGold((g) => g + val);
     setTotalGold((t) => t + val);
     setTotalClicks((c) => c + 1);
+    seedGol(); // add life on each click
 
     // Random particle position
     const rect = clickBtnRef.current?.getBoundingClientRect();
@@ -504,6 +614,23 @@ export default function DungeonPage() {
           </div>
 
           <style>{`@keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-40px); } }`}</style>
+
+          {/* Game of Life dungeon map */}
+          <div style={{ textAlign: "center", margin: "1em 0" }}>
+            <canvas
+              ref={canvasRef}
+              style={{
+                border: "1px solid var(--theme-border)",
+                borderRadius: "4px",
+                imageRendering: "pixelated",
+                width: "100%",
+                maxWidth: COLS * (CELL + GAP) + GAP,
+              }}
+            />
+            <div style={{ opacity: 0.3, fontSize: "0.75em", marginTop: 4 }}>
+              dungeon map · cells alive
+            </div>
+          </div>
 
           <div style={{ flex: 1 }} />
 

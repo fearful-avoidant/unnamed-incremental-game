@@ -156,15 +156,17 @@ const mobileBreakpoint = 700;
 // STYLES
 // ═══════════════════════════════════════════════════════════════════
 
-const layoutS: React.CSSProperties = { display: "flex", gap: 0, minHeight: "85vh" };
-const leftS: React.CSSProperties = { flex: "0 0 38%", borderRight: "2px solid var(--theme-border)", padding: "2em 3ch", display: "flex", flexDirection: "column" };
-const rightS: React.CSSProperties = { flex: 1, minWidth: 0, maxHeight: "90vh", overflowY: "auto" };
-const goldS: React.CSSProperties = { fontSize: "2.8em", fontWeight: 400, lineHeight: 1.1, letterSpacing: "-1px" };
-const shopItem: React.CSSProperties = { display: "flex", alignItems: "center", padding: "8px 0", cursor: "pointer", gap: "1ch", borderTop: "1px solid var(--theme-border)" };
+const layoutS: React.CSSProperties = { display: "flex", gap: 0, minHeight: "100vh" };
+const leftS: React.CSSProperties = { flex: "0 0 32%", borderRight: "1px solid var(--theme-border)", padding: "1em 2ch", display: "flex", flexDirection: "column" };
+const rightS: React.CSSProperties = { flex: 1, minWidth: 0, maxHeight: "100vh", overflowY: "auto" };
+const goldS: React.CSSProperties = { fontSize: "1.6em", fontWeight: 400, lineHeight: 1.2 };
+const shopItem: React.CSSProperties = { display: "flex", alignItems: "center", padding: "5px 0", cursor: "pointer", gap: "1ch", borderTop: "1px solid var(--theme-border)" };
 const shopDis: React.CSSProperties = { ...shopItem, opacity: 0.3, cursor: "default" };
-const iconS: React.CSSProperties = { width: "3ch", textAlign: "center", flexShrink: 0 };
-const tabS: React.CSSProperties = { display: "inline-block", padding: "4px 1ch", cursor: "pointer", opacity: 0.5, borderBottom: "2px solid transparent", marginRight: "1ch" };
-const tabA: React.CSSProperties = { ...tabS, opacity: 1, borderBottom: "2px solid var(--theme-text)" };
+const iconS: React.CSSProperties = { width: "2ch", textAlign: "center", flexShrink: 0, fontSize: "0.9em" };
+const tabS: React.CSSProperties = { display: "inline-block", padding: "2px 0.8ch", cursor: "pointer", opacity: 0.4, borderBottom: "1px solid transparent", marginRight: "0.5ch", fontSize: "0.85em" };
+const tabA: React.CSSProperties = { ...tabS, opacity: 1, borderBottom: "1px solid var(--theme-text)" };
+const rowS: React.CSSProperties = { display: "flex", gap: "0.5ch", flexWrap: "wrap", fontSize: "0.8em", opacity: 0.6, marginTop: 2 };
+const compactBtn: React.CSSProperties = { fontSize: "0.8em" };
 
 // ═══════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -604,19 +606,30 @@ export default function DungeonPage() {
   // RENDER HELPERS
   // ═══════════════════════════════════════════════════════════════
 
-  const renderItem = (u: any, cost: number, canBuy: boolean, onClick: () => void, extra?: string) => (
-    <div key={u.id} style={canBuy ? shopItem : shopDis} onClick={canBuy ? onClick : undefined}>
-      <span style={iconS}>{u.icon || "▪"}</span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div>{u.name}</div>
-        <div style={{ opacity: 0.5, fontSize: "0.85em" }}>{u.desc}{extra ? " " + extra : ""}</div>
+  const renderItem = (u: any, cost: number, canBuy: boolean, onClick: () => void, extra?: string) => {
+    const owned = buildings[u.id] || 0;
+    const isHire = u.gps != null;
+    const totalOutput = isHire ? u.gps * owned * soulBonus * hireMultBonus * globalMult * runeGpsBonus * runeGoldBonus * runeInfinityBonus * challengeBonus.gps * challengeBonus.global * corrGpsMult * corruptionMult : 0;
+    return (
+      <div key={u.id} style={canBuy ? shopItem : shopDis} onClick={canBuy ? onClick : undefined}>
+        <span style={iconS}>{u.icon || "▪"}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>{u.name}</span>
+            {owned > 0 && isHire && <span style={{ opacity: 0.4, fontSize: "0.8em" }}>{fmt(totalOutput)}/s</span>}
+          </div>
+          <div style={{ opacity: 0.5, fontSize: "0.8em" }}>
+            {u.desc}{extra ? " " + extra : ""}
+            {owned > 0 && isHire && <span> &middot; {fmt(u.gps * soulBonus * hireMultBonus * globalMult * runeInfinityBonus * challengeBonus.gps * challengeBonus.global * corruptionMult)}/s each</span>}
+          </div>
+        </div>
+        <div style={{ textAlign: "right", flexShrink: 0, marginLeft: "1ch" }}>
+          <div style={{ fontSize: "0.9em" }}>{fmt(cost)}{isHire ? "g" : ""}</div>
+          {owned > 0 && <div style={{ opacity: 0.5, fontSize: "0.8em" }}>x{owned}</div>}
+        </div>
       </div>
-      <div style={{ textAlign: "right", flexShrink: 0 }}>
-        <div>{fmt(cost)}{u.gps != null ? "g" : ""}</div>
-        {(buildings[u.id] || 0) > 0 && <div style={{ opacity: 0.5, fontSize: "0.85em" }}>x{buildings[u.id]}</div>}
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderUpgradeList = (items: any[], levels: Record<string,number>, currency: number, setCurrency: any, setUpgrades: any, currName: string) => (
     <CardDouble title={currName.toUpperCase() + " UPGRADES"}>
@@ -624,15 +637,15 @@ export default function DungeonPage() {
         const level = levels[u.id] || 0;
         const canBuy = currency >= u.costPer && level < u.max;
         return (
-          <div key={u.id} style={canBuy ? shopItem : shopDis} onClick={canBuy ? () => buyUpgrade(u, level, currency, setCurrency, setUpgrades, u.costPer) : undefined}>
+          <div key={u.id} style={canBuy ? { ...shopItem, padding: "4px 0" } : { ...shopDis, padding: "4px 0" }} onClick={canBuy ? () => buyUpgrade(u, level, currency, setCurrency, setUpgrades, u.costPer) : undefined}>
             <span style={iconS}>{u.icon}</span>
-            <div style={{ flex: 1 }}>
-              <div>{u.name}</div>
-              <div style={{ opacity: 0.5, fontSize: "0.85em" }}>{u.desc}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span>{u.name}</span>
+              <span style={{ opacity: 0.4, fontSize: "0.8em", marginLeft: "1ch" }}>{u.desc}</span>
             </div>
-            <div style={{ textAlign: "right", flexShrink: 0 }}>
-              <div>Lv {level}/{u.max}</div>
-              <div style={{ opacity: 0.5, fontSize: "0.85em" }}>{u.costPer} {currName}</div>
+            <div style={{ textAlign: "right", flexShrink: 0, fontSize: "0.85em" }}>
+              <span>{level}/{u.max}</span>
+              <span style={{ opacity: 0.4, marginLeft: "0.5ch" }}>({u.costPer})</span>
             </div>
           </div>
         );
@@ -641,27 +654,32 @@ export default function DungeonPage() {
   );
 
   const renderStats = () => {
-    const stats = [
-      ["Total gold earned", fmt(totalGold)],
-      ["Gold per second", fmt(gps)],
+    const left = [
+      ["Gold earned", fmt(totalGold)],
+      ["Gold/sec", fmt(gps)],
       ["Click power", fmt(clickVal)],
       ["Total clicks", totalClicks.toLocaleString()],
-      ["Total buildings", totalBuildings.toLocaleString()],
-      ["Souls / Shards / Essence", fmt(souls) + " / " + fmt(soulShards) + " / " + fmt(demonEssence)],
-      ["Prestiges / Transcends / Reincarnations", prestigeCount + " / " + transcendCount + " / " + reincarnateCount],
-      ["Sacrifices", sacrificeCount.toString()],
+      ["Buildings", totalBuildings.toLocaleString()],
       ["Offerings", fmt(offerings)],
-      ["Challenges completed", challengeResults.filter(r => r.completed).length + "/" + CHALLENGES.length],
-      ["Events triggered", eventsTriggered.toString()],
     ];
+    const right = [
+      ["Souls", fmt(souls)],
+      ["Shards", fmt(soulShards)],
+      ["Essence", fmt(demonEssence)],
+      ["Prestiges", prestigeCount + " / " + transcendCount + " / " + reincarnateCount],
+      ["Challenges", challengeResults.filter(r => r.completed).length + "/" + CHALLENGES.length],
+      ["Events", eventsTriggered.toString()],
+    ];
+    const statRow = (l: string, v: string) => (
+      <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", borderTop: "1px solid var(--theme-border)", fontSize: "0.85em" }}>
+        <span style={{ opacity: 0.5 }}>{l}</span><span>{v}</span>
+      </div>
+    );
     return (
-      <CardDouble title="STATS">
-        {stats.map(([l, v]) => (
-          <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderTop: "1px solid var(--theme-border)" }}>
-            <span style={{ opacity: 0.6 }}>{l}</span><span>{v}</span>
-          </div>
-        ))}
-      </CardDouble>
+      <div style={{ display: "flex", gap: "2ch" }}>
+        <div style={{ flex: 1 }}><CardDouble title="STATS">{left.map(([l, v]) => statRow(l, v))}</CardDouble></div>
+        <div style={{ flex: 1 }}><CardDouble title="MORE">{right.map(([l, v]) => statRow(l, v))}</CardDouble></div>
+      </div>
     );
   };
 
@@ -679,23 +697,27 @@ export default function DungeonPage() {
 
       <div style={isMobile ? { display: "block" } : layoutS}>
         {/* LEFT */}
-        <div style={isMobile ? { borderBottom: "2px solid var(--theme-border)", padding: "1em 2ch" } : leftS}>
-          <div style={goldS}>{fmt(gold)}</div>
-          <div style={{ opacity: 0.6 }}>gold</div>
-          <div style={{ opacity: 0.4, fontSize: "0.85em", marginTop: 4 }}>{fmt(gps)}/sec &middot; +{fmt(clickVal)}/click</div>
-
-          {/* Currency row */}
-          <div style={{ display: "flex", gap: "2ch", marginTop: 8, flexWrap: "wrap", fontSize: "0.85em" }}>
-            {souls > 0 && <div><Badge>{fmt(souls)}</Badge> souls</div>}
-            {soulShards > 0 && <div><Badge>{fmt(soulShards)}</Badge> shards</div>}
-            {demonEssence > 0 && <div><Badge>{fmt(demonEssence)}</Badge> essence</div>}
-            {offerings > 0 && <div><Badge>{fmt(offerings)}</Badge> offerings</div>}
+        <div style={isMobile ? { borderBottom: "1px solid var(--theme-border)", padding: "0.5em 1ch" } : leftS}>
+          {/* Compact header: gold + currencies inline */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <div style={goldS}>{fmt(gold)} <span style={{ opacity: 0.5, fontSize: "0.6em" }}>gold</span></div>
+            <div style={{ opacity: 0.4, fontSize: "0.8em" }}>{fmt(gps)}/s &middot; +{fmt(clickVal)}</div>
+          </div>
+          <div style={rowS}>
+            {souls > 0 && <span>{fmt(souls)} souls</span>}
+            {soulShards > 0 && <span>{fmt(soulShards)} shards</span>}
+            {demonEssence > 0 && <span>{fmt(demonEssence)} essence</span>}
+            {offerings > 0 && <span>{fmt(offerings)} offerings</span>}
+            <span>{totalBuildings} buildings</span>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "center", margin: "1em 0" }} ref={clickBtnRef}>
-            <ActionButton onClick={doClick} hotkey={chalNoClick ? "DISABLED" : "+ " + fmt(clickVal)}>
-              {chalNoClick ? "🚫" : "⚔"} RAID
-            </ActionButton>
+          {/* Click + reset row */}
+          <div style={{ display: "flex", gap: "0.5ch", margin: "0.5em 0", flexWrap: "wrap", alignItems: "center" }} ref={clickBtnRef}>
+            <div style={compactBtn}><ActionButton onClick={doClick} hotkey={chalNoClick ? "—" : "+" + fmt(clickVal)}>{chalNoClick ? "🚫" : "⚔"} RAID</ActionButton></div>
+            <div style={compactBtn}><ActionButton onClick={doPrestige} hotkey={prestigeSouls >= 1 ? "+" + prestigeSouls : "—"}>Prestige</ActionButton></div>
+            {(transcendCount > 0 || totalSouls >= 100) && <div style={compactBtn}><ActionButton onClick={doTranscend} hotkey={transcendShards >= 1 ? "+" + transcendShards : "—"}>Transcend</ActionButton></div>}
+            {(reincarnateCount > 0 || totalShards >= 10) && <div style={compactBtn}><ActionButton onClick={doReincarnate} hotkey={reincarnateEssence >= 1 ? "+" + reincarnateEssence : "—"}>Reincarn</ActionButton></div>}
+            {totalBuildings > 0 && <div style={compactBtn}><ActionButton onClick={doSacrifice} hotkey={fmt(sacrificeValue)}>Sacrifice</ActionButton></div>}
           </div>
 
           <div style={{ position: "relative", height: 0 }}>
@@ -703,50 +725,21 @@ export default function DungeonPage() {
           </div>
           <style>{`@keyframes floatUp { 0% { opacity:1; transform:translateY(0); } 100% { opacity:0; transform:translateY(-40px); } }`}</style>
 
-          {/* Game of Life */}
-          <div style={{ textAlign: "center", margin: "1em 0" }}>
-            <canvas ref={canvasRef} style={{ border: "1px solid var(--theme-border)", borderRadius: 4, imageRendering: "pixelated", width: "100%", maxWidth: COLS*(CELL+GAP)+GAP }} />
-            <div style={{ opacity: 0.3, fontSize: "0.75em", marginTop: 4 }}>dungeon map &middot; cells alive</div>
+          {/* Game of Life - compact */}
+          <div style={{ textAlign: "center", margin: "0.5em 0" }}>
+            <canvas ref={canvasRef} style={{ border: "1px solid var(--theme-border)", borderRadius: 2, imageRendering: "pixelated", width: "100%", maxWidth: 360 }} />
           </div>
 
+          {/* Upgrade trees - stacked */}
           <div style={{ flex: 1 }} />
-
-          {/* Reset buttons */}
-          <div style={{ display: "flex", gap: "1ch", marginBottom: "1em", flexWrap: "wrap" }}>
-            <ActionButton onClick={doPrestige} hotkey={prestigeSouls >= 1 ? "+"+prestigeSouls : "—"}>
-              Prestige
-            </ActionButton>
-            {transcendCount > 0 || totalSouls >= 100 ? (
-              <ActionButton onClick={doTranscend} hotkey={transcendShards >= 1 ? "+"+transcendShards : "—"}>
-                Transcend
-              </ActionButton>
-            ) : null}
-            {reincarnateCount > 0 || totalShards >= 10 ? (
-              <ActionButton onClick={doReincarnate} hotkey={reincarnateEssence >= 1 ? "+"+reincarnateEssence : "—"}>
-                Reincarnate
-              </ActionButton>
-            ) : null}
-          </div>
-
-          {totalBuildings > 0 && (
-            <div style={{ marginBottom: "1em" }}>
-              <ActionButton onClick={doSacrifice} hotkey={fmt(sacrificeValue)}>
-                Sacrifice All ({fmt(offerings)} + {fmt(sacrificeValue)})
-              </ActionButton>
-            </div>
-          )}
-
-          {/* Upgrade trees */}
           {renderUpgradeList(SOUL_UPGRADES, prestigeUpgrades, freeSouls, setSouls, setPrestigeUpgrades, "souls")}
-          {transcendCount > 0 && <br />}
           {transcendCount > 0 && renderUpgradeList(SHARD_UPGRADES, transcendUpgrades, freeShards, setSoulShards, setTranscendUpgrades, "shards")}
-          {reincarnateCount > 0 && <br />}
           {reincarnateCount > 0 && renderUpgradeList(ESSENCE_UPGRADES, reincarnateUpgrades, freeEssence, setDemonEssence, setReincarnateUpgrades, "essence")}
         </div>
 
         {/* RIGHT */}
         <div style={rightS}>
-          <div style={{ padding: "2em 3ch 0", borderBottom: "1px solid var(--theme-border)" }}>
+          <div style={{ padding: "1em 2ch 0", borderBottom: "1px solid var(--theme-border)" }}>
             <span style={tab === "hirelings" ? tabA : tabS} onClick={() => setTab("hirelings")}>HIRELINGS</span>
             <span style={tab === "upgrades" ? tabA : tabS} onClick={() => setTab("upgrades")}>UPGRADES</span>
             <span style={tab === "challenges" ? tabA : tabS} onClick={() => setTab("challenges")}>CHALLENGES</span>
@@ -754,7 +747,7 @@ export default function DungeonPage() {
             <span style={tab === "stats" ? tabA : tabS} onClick={() => setTab("stats")}>STATS</span>
           </div>
 
-          <div style={{ padding: "1em 3ch" }}>
+          <div style={{ padding: "0.5em 2ch" }}>
             {tab === "hirelings" && (
               <CardDouble title="HIRELINGS">
                 {HIRES.map(u => renderItem(u, getHireCost(u, buildings, soulDiscount, corrCostMult), gold >= getHireCost(u, buildings, soulDiscount, corrCostMult) * totalCostMult, () => buy(u, true)))}
@@ -769,34 +762,31 @@ export default function DungeonPage() {
 
             {tab === "challenges" && (
               <CardDouble title="CHALLENGES">
-                <div style={{ opacity: 0.6, marginBottom: "1em", fontSize: "0.85em" }}>
-                  Earn {fmt(challengeGoal)} gold under restrictions. Permanent bonuses on completion.
+                <div style={{ opacity: 0.5, marginBottom: "0.5em", fontSize: "0.8em" }}>
+                  Goal: {fmt(challengeGoal)} gold. Permanent bonuses on completion.
                 </div>
                 {CHALLENGES.map((c, i) => {
                   const r = challengeResults[i];
                   const canStart = activeChallenge < 0;
                   return (
-                    <div key={i} style={{ padding: "8px 0", borderTop: "1px solid var(--theme-border)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "1ch" }}>
-                        <span style={iconS}>{c.icon}</span>
-                        <div style={{ flex: 1 }}>
-                          <div>{c.name} {r.completed && <Badge>✓</Badge>}</div>
-                          <div style={{ opacity: 0.5, fontSize: "0.85em" }}>{c.desc} &middot; Reward: {c.rewardDesc}</div>
-                          {r.completed && <div style={{ opacity: 0.4, fontSize: "0.75em" }}>Best: {r.bestTime.toFixed(1)}s</div>}
+                    <div key={i} style={{ padding: "5px 0", borderTop: "1px solid var(--theme-border)", display: "flex", alignItems: "center", gap: "1ch" }}>
+                      <span style={iconS}>{c.icon}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span>{c.name} {r.completed && <span style={{ color: "var(--theme-focused-foreground)" }}>✓</span>}</span>
+                          {r.completed && <span style={{ opacity: 0.3, fontSize: "0.75em" }}>{r.bestTime.toFixed(1)}s</span>}
                         </div>
-                        {canStart && !r.completed && (
-                          <ActionButton onClick={() => startChallenge(i)} hotkey="START">Start</ActionButton>
-                        )}
-                        {r.completed && (
-                          <ActionButton onClick={() => startChallenge(i)} hotkey="RETRY">Retry</ActionButton>
-                        )}
+                        <div style={{ opacity: 0.5, fontSize: "0.8em" }}>{c.desc} &middot; {c.rewardDesc}</div>
                       </div>
+                      {(canStart || r.completed) && (
+                        <div style={compactBtn}><ActionButton onClick={() => startChallenge(i)} hotkey={r.completed ? "RETRY" : "START"}>{r.completed ? "R" : "Go"}</ActionButton></div>
+                      )}
                     </div>
                   );
                 })}
                 {activeChallenge >= 0 && (
-                  <div style={{ marginTop: "1em" }}>
-                    <ActionButton onClick={() => endChallenge(false)} hotkey="ABANDON">Abandon Challenge</ActionButton>
+                  <div style={{ marginTop: "0.5em" }}>
+                    <ActionButton onClick={() => endChallenge(false)} hotkey="ABANDON">Abandon</ActionButton>
                   </div>
                 )}
               </CardDouble>
@@ -805,47 +795,44 @@ export default function DungeonPage() {
             {tab === "runes" && (
               <>
                 <CardDouble title="RUNES">
-                  <div style={{ opacity: 0.6, marginBottom: "1em", fontSize: "0.85em" }}>
-                    Level runes with offerings (from sacrifice). Offerings: <span style={{ color: "var(--theme-text)" }}>{fmt(offerings)}</span>
+                  <div style={{ opacity: 0.5, marginBottom: "0.5em", fontSize: "0.8em" }}>
+                    Offerings: {fmt(offerings)} (from sacrifice)
                   </div>
                   {RUNES.map(u => {
                     const level = runes[u.id] || 0;
                     const cost = getRuneCost(u, level);
                     const canBuy = offerings >= cost && level < u.max;
                     return (
-                      <div key={u.id} style={canBuy ? shopItem : shopDis} onClick={canBuy ? () => buyRune(u) : undefined}>
+                      <div key={u.id} style={canBuy ? { ...shopItem, padding: "4px 0" } : { ...shopDis, padding: "4px 0" }} onClick={canBuy ? () => buyRune(u) : undefined}>
                         <span style={iconS}>{u.icon}</span>
-                        <div style={{ flex: 1 }}>
-                          <div>{u.name}</div>
-                          <div style={{ opacity: 0.5, fontSize: "0.85em" }}>{u.desc}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span>{u.name}</span>
+                          <span style={{ opacity: 0.4, fontSize: "0.8em", marginLeft: "1ch" }}>{u.desc}</span>
                         </div>
-                        <div style={{ textAlign: "right", flexShrink: 0 }}>
-                          <div>Lv {level}/{u.max}</div>
-                          <div style={{ opacity: 0.5, fontSize: "0.85em" }}>{fmt(cost)} offerings</div>
+                        <div style={{ textAlign: "right", flexShrink: 0, fontSize: "0.85em" }}>
+                          <span>{level}/{u.max}</span>
+                          <span style={{ opacity: 0.4, marginLeft: "0.5ch" }}>{fmt(cost)}o</span>
                         </div>
                       </div>
                     );
                   })}
                 </CardDouble>
-                <br />
                 <CardDouble title="CORRUPTIONS">
-                  <div style={{ opacity: 0.6, marginBottom: "1em", fontSize: "0.85em" }}>
-                    Opt-in debuffs that multiply rewards. Score: {corruptionScore} (x{corruptionMult.toFixed(1)} rewards)
+                  <div style={{ opacity: 0.5, marginBottom: "0.5em", fontSize: "0.8em" }}>
+                    Score: {corruptionScore} (x{corruptionMult.toFixed(1)} rewards) &middot; Opt-in debuffs
                   </div>
                   {CORRUPTIONS.map(c => {
                     const level = corruptions[c.id] || 0;
                     return (
-                      <div key={c.id} style={{ padding: "8px 0", borderTop: "1px solid var(--theme-border)" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "1ch" }}>
-                          <div style={{ flex: 1 }}>
-                            <div>{c.name}</div>
-                            <div style={{ opacity: 0.5, fontSize: "0.85em" }}>{c.desc}</div>
-                          </div>
-                          <div style={{ display: "flex", gap: "4px" }}>
-                            <ActionButton onClick={() => setCorruptions(cr => ({ ...cr, [c.id]: Math.max(0, level - 1) }))} hotkey="-">-</ActionButton>
-                            <span style={{ padding: "0 1ch" }}>{level}/{c.max}</span>
-                            <ActionButton onClick={() => setCorruptions(cr => ({ ...cr, [c.id]: Math.min(c.max, level + 1) }))} hotkey="+">+</ActionButton>
-                          </div>
+                      <div key={c.id} style={{ padding: "4px 0", borderTop: "1px solid var(--theme-border)", display: "flex", alignItems: "center", gap: "1ch" }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span>{c.name}</span>
+                          <span style={{ opacity: 0.4, fontSize: "0.8em", marginLeft: "1ch" }}>{c.desc}</span>
+                        </div>
+                        <div style={{ display: "flex", gap: "2px", alignItems: "center", fontSize: "0.85em" }}>
+                          <span style={{ cursor: "pointer", opacity: level > 0 ? 1 : 0.2 }} onClick={() => setCorruptions(cr => ({ ...cr, [c.id]: Math.max(0, level - 1) }))}>[-]</span>
+                          <span style={{ padding: "0 0.5ch" }}>{level}/{c.max}</span>
+                          <span style={{ cursor: "pointer", opacity: level < c.max ? 1 : 0.2 }} onClick={() => setCorruptions(cr => ({ ...cr, [c.id]: Math.min(c.max, level + 1) }))}>[+]</span>
                         </div>
                       </div>
                     );
